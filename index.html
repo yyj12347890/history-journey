@@ -226,7 +226,7 @@ main > #view-ranking.view {
       <div style="display:flex;align-items:center;gap:8px"><strong id="my-friend-code" style="font-size:23px;letter-spacing:.12em;flex:1">불러오는 중…</strong><button class="btn small outline" id="friend-code-copy" type="button">복사</button></div>
     </div>
     <label for="friend-code-input">친구 번호 입력</label>
-    <input id="friend-code-input" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="예: 역사나무4821">
+    <input id="friend-code-input" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="예: ㄱㄴㄷㄱ1234">
     <div class="modal-actions" style="margin-top:10px"><button class="btn" id="friend-add" type="button">친구 추가</button></div>
     <div class="section-head" style="margin:18px 0 8px"><div><h3 style="font-size:16px">💌 받은 응원 문구</h3></div><button class="btn small outline" id="cheer-refresh" type="button">새로고침</button></div>
     <div id="cheer-messages-list" class="small-text muted">응원 문구를 불러오는 중…</div>
@@ -751,11 +751,11 @@ async function publishRanking(){const c=saveRankingConfig();if(!c)return;const s
 async function refreshRanking(){const c=rankingConfig();if(!c.nickname){return}try{const res=await rankingFetch(rankingPath(c));const data=await res.json();const list=document.getElementById("ranking-list");document.getElementById("ranking-room-label").textContent="전체 사용자 · 누적 경험치 순";if(!data||typeof data!=="object"){list.innerHTML='<div class="empty"><div class="emoji">🏆</div><strong>아직 등록된 기록이 없어.</strong><p>내 기록을 등록하고 친구들에게도 참여를 안내해 주세요.</p></div>';return}const rows=Object.values(data).filter(x=>x&&typeof x==="object"&&typeof x.xp==="number").sort((a,b)=>b.xp-a.xp||(Number(b.level)||0)-(Number(a.level)||0)||String(a.nickname).localeCompare(String(b.nickname))).slice(0,100);if(!rows.length){list.innerHTML='<div class="empty"><div class="emoji">🏆</div><strong>아직 등록된 기록이 없어.</strong><p>내 기록을 등록하고 친구들에게도 참여를 안내해 주세요.</p></div>';return}list.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left"><thead><tr style="border-bottom:2px solid var(--line)"><th style="padding:10px 6px">순위</th><th style="padding:10px 6px">이름</th><th style="padding:10px 6px">단계</th><th style="padding:10px 6px">풀이</th><th style="padding:10px 6px;text-align:right">경험치</th></tr></thead><tbody>${rows.map((r,i)=>`<tr style="border-bottom:1px solid var(--line)"><td style="padding:12px 6px;font-weight:700">${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'위'}</td><td style="padding:12px 6px;font-weight:600">${esc(r.nickname||'익명')}</td><td style="padding:12px 6px">단계 ${Number(r.level)||1}</td><td style="padding:12px 6px">${Number(r.answered)||0}</td><td style="padding:12px 6px;text-align:right;font-weight:700;white-space:nowrap">${Number(r.xp)||0} 경험치</td></tr>`).join("")}</tbody></table></div>`;document.getElementById("ranking-status").textContent="온라인 순위표를 불러왔습니다. 15초마다 자동으로 새로고침됩니다."}catch(e){document.getElementById("ranking-status").textContent="순위표를 불러오지 못했습니다. 온라인 기록 권한 설정과 로그인 연결을 확인해 주세요. ("+e.message+")"}}
 // 친구 번호 기반 친구 기능
 const FRIEND_CODE_KEY="historyQuest_friendCode_v1";
-function makeFriendCode(){const syllables="가나다라마바사아자차카타파하거너더러머버서어저처커터퍼허고노도로모보소오조초코토포호구누두루무부수우주추쿠투푸후기니디리미비시이지치키티피히";let out="";for(let i=0;i<4;i++)out+=syllables[Math.floor(Math.random()*syllables.length)];for(let i=0;i<4;i++)out+=Math.floor(Math.random()*10);return out}
+function makeFriendCode(){const consonants="ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";let out="";for(let i=0;i<4;i++)out+=consonants[Math.floor(Math.random()*consonants.length)];for(let i=0;i<4;i++)out+=Math.floor(Math.random()*10);return out}
 function friendDb(path){return FIREBASE_DB_URL+"/"+path+".json"}
 async function ensureFriendCode(auth){
   let code=localStorage.getItem(FRIEND_CODE_KEY)||"";
-  if(!/^[가-힣]{4}[0-9]{4}$/.test(code)){code="";localStorage.removeItem(FRIEND_CODE_KEY);}
+  if(!/^[ㄱ-ㅎ]{4}[0-9]{4}$/.test(code)){code="";localStorage.removeItem(FRIEND_CODE_KEY);}
   for(let attempt=0;attempt<5;attempt++){
     if(!code)code=makeFriendCode();
     const url=friendDb("historyQuestFriendCodes/"+encodeURIComponent(code));
@@ -867,7 +867,7 @@ async function openFriends(){
 async function addFriend(){
   const input=document.getElementById("friend-code-input"),status=document.getElementById("friends-status");
   const code=input.value.trim().replace(/\s/g,"");
-  if(!/^[가-힣]{4}[0-9]{4}$/.test(code)){status.textContent="한글 4자와 숫자 4자로 된 친구 번호를 정확히 입력해 주세요.";return}
+  if(!/^[ㄱ-ㅎ]{4}[0-9]{4}$/.test(code)){status.textContent="자음 4개와 숫자 4개로 된 친구 번호를 정확히 입력해 주세요.";return}
   status.textContent="친구 요청을 보내는 중…";
   try{
     const auth=await firebaseAuth();const codeRes=await rankingFetch(friendDb("historyQuestFriendCodes/"+encodeURIComponent(code)));const friendUid=await codeRes.json();
@@ -892,7 +892,7 @@ document.getElementById("friends-close").addEventListener("click",()=>closeModal
 document.getElementById("friend-add").addEventListener("click",addFriend);
 document.getElementById("friend-refresh").addEventListener("click",loadFriends);
 document.getElementById("cheer-refresh").addEventListener("click",loadEncouragements);
-document.getElementById("friend-code-copy").addEventListener("click",async()=>{const code=document.getElementById("my-friend-code").textContent;if(!/^[가-힣]{4}[0-9]{4}$/.test(code)){document.getElementById("friends-status").textContent="먼저 친구 번호를 불러와 주세요.";return}try{await navigator.clipboard.writeText(code);document.getElementById("friends-status").textContent="친구 번호를 복사했어요."}catch(e){document.getElementById("friends-status").textContent="번호를 길게 눌러 복사해 주세요: "+code}});
+document.getElementById("friend-code-copy").addEventListener("click",async()=>{const code=document.getElementById("my-friend-code").textContent;if(!/^[ㄱ-ㅎ]{4}[0-9]{4}$/.test(code)){document.getElementById("friends-status").textContent="먼저 친구 번호를 불러와 주세요.";return}try{await navigator.clipboard.writeText(code);document.getElementById("friends-status").textContent="친구 번호를 복사했어요."}catch(e){document.getElementById("friends-status").textContent="번호를 길게 눌러 복사해 주세요: "+code}});
 document.getElementById("friends-modal").addEventListener("click",e=>{if(e.target===e.currentTarget)closeModal(e.currentTarget)});
 
 // 순위표 등록 버튼을 눌렀을 때만 내 기록을 온라인 순위표에 올립니다.
